@@ -311,6 +311,7 @@ console.log(jonas.getSummary());
 // const johnHeight = 1.76;
 // const johnBMI = johnMass / (johnHeight * johnHeight);
 
+// Changes to dev branch
 const markObject = {
   fullName: 'Mark Miller',
   mass: 78,
