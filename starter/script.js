@@ -320,6 +320,7 @@ const markObject = {
     return this.markBMI;
   },
 };
+
 const johnObject = {
   fullName: 'John Smith',
   mass: 92,
