@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { listModels, streamChat, usableProviders } from '../lib/providers.js';
 import { exportAll, importAll, clearAll, validateBackup } from '../lib/storage.js';
+import { MAX_CUSTOM_INSTRUCTIONS, STYLE_PRESETS } from '../lib/prompts.js';
 import { DownIcon, EyeIcon, UpIcon } from './Icons.jsx';
 
 const KEY_STEPS = {
@@ -195,6 +196,20 @@ export default function SettingsView({ settings, setSettings, onDataReplaced, in
   const [includeKeys, setIncludeKeys] = useState(false);
   const set = (patch) => setSettings({ ...settings, ...patch });
   const providers = settings.providers;
+  const custom = settings.customInstructions || '';
+  const togglePreset = (text) => {
+    if (custom.includes(text)) {
+      const next = custom
+        .split('\n')
+        .filter((line) => line.replace(/^[-•]\s*/, '').trim() !== text)
+        .join('\n')
+        .trim();
+      set({ customInstructions: next });
+    } else {
+      const next = (custom.trim() ? custom.trim() + '\n' : '') + '- ' + text;
+      set({ customInstructions: next.slice(0, MAX_CUSTOM_INSTRUCTIONS) });
+    }
+  };
 
   const changeProvider = (i, p) => set({ providers: providers.map((x, j) => (j === i ? p : x)) });
   const move = (i, dir) => {
@@ -308,6 +323,53 @@ export default function SettingsView({ settings, setSettings, onDataReplaced, in
             <option value="detailed">Detailed</option>
           </select>
         </label>
+      </section>
+
+      <section className="card">
+        <h2>Tutor style</h2>
+        <p className="muted">
+          Your own rules for the tutor. It follows them in every lesson, in every mode. Tap a preset to add it, or write
+          your own — one rule per line.
+        </p>
+        <div className="preset-list">
+          {STYLE_PRESETS.map((pr) => {
+            const on = custom.includes(pr.text);
+            return (
+              <button
+                key={pr.label}
+                type="button"
+                className={'chip' + (on ? ' active' : '')}
+                aria-pressed={on}
+                onClick={() => togglePreset(pr.text)}
+              >
+                {on ? '✓ ' : '+ '}
+                {pr.label}
+              </button>
+            );
+          })}
+        </div>
+        <label className="field">
+          <span>Custom instructions</span>
+          <textarea
+            className="input"
+            rows={6}
+            value={custom}
+            maxLength={MAX_CUSTOM_INSTRUCTIONS}
+            placeholder={'e.g.\n- Use football analogies\n- Reply in Hindi, keep tech terms in English\n- Quiz me with code questions only'}
+            onChange={(e) => set({ customInstructions: e.target.value })}
+          />
+        </label>
+        <div className="row between">
+          <span className="muted small">
+            {custom.length}/{MAX_CUSTOM_INSTRUCTIONS}
+          </span>
+          {custom && (
+            <button type="button" className="btn btn-small btn-ghost" onClick={() => confirm('Clear your tutor style rules?') && set({ customInstructions: '' })}>
+              Clear
+            </button>
+          )}
+        </div>
+        <p className="muted small">Tip: changes apply to your next message — even in a lesson you already started.</p>
       </section>
 
       <section className="card">

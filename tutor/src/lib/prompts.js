@@ -89,8 +89,23 @@ function learningSummary(log) {
   return lines.join('\n');
 }
 
+export const MAX_CUSTOM_INSTRUCTIONS = 2000;
+
+/** One-tap presets for the "Tutor style" box in Settings. */
+export const STYLE_PRESETS = [
+  { label: 'Hints before answers', text: 'Never give the full solution first. Give me up to 2 hints and let me try before showing the answer.' },
+  { label: 'Use analogies', text: 'Explain new ideas with simple real-life analogies.' },
+  { label: 'Challenge me more', text: 'Push me a bit: make exercises slightly harder than my level and ask follow-up "why" questions.' },
+  { label: 'Explain like I’m 15', text: 'Explain things simply, like I am 15, avoiding jargon until you have explained it.' },
+  { label: 'Modern JS only', text: 'Always use modern JavaScript (const/let, arrow functions, async/await, ES modules).' },
+  { label: 'End with a summary', text: 'End every lesson with a one-line summary I can copy into my notebook.' },
+  { label: 'Real-world context', text: 'Tell me where each concept is used in real apps and websites.' },
+  { label: 'Encourage me', text: 'Be extra encouraging and celebrate small wins.' },
+];
+
 export function buildSystemPrompt({ settings, mode, notes, log }) {
   const m = MODES[mode] || MODES.explain;
+  const custom = (settings.customInstructions || '').trim().slice(0, MAX_CUSTOM_INSTRUCTIONS);
   const enabledNotes = (notes || []).filter((n) => n.enabled && n.content.trim());
   const notesText = enabledNotes
     .map((n) => `### ${n.title || 'Note'}\n${n.content.trim().slice(0, 4000)}`)
@@ -115,7 +130,7 @@ TEACHING STYLE
 - If you are not sure about something (e.g. a library version), say so.
 
 ${m.instructions}
-
+${custom ? `\nLEARNER'S CUSTOM INSTRUCTIONS (the learner wrote these — follow them; they override the teaching style above, but never the TRACKING rules)\n${custom}\n` : ''}
 TRACKING (hidden from the learner — the app strips these tags)
 - At the very end of every reply, add one line with the main topic: <!--tutor:{"topic":"Short Topic Name"}-->
   Use short, reusable names like "CSS Flexbox", "JS Promises", "Git Branching", "HTTP Basics".

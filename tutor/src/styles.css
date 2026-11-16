@@ -381,6 +381,17 @@ input[type='range'] {
   padding: 12px 0 4px;
   margin-top: 8px;
 }
+.preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.preset-list .chip {
+  min-height: 44px;
+  white-space: normal;
+  text-align: left;
+}
 .provider-head {
   display: flex;
   align-items: center;

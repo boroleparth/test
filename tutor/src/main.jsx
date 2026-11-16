@@ -24,9 +24,12 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
           if (worker.state === 'installed' && navigator.serviceWorker.controller) announce(worker);
         });
       });
+      // Reload only when a NEW version replaces an old one — not on the very first
+      // install, where the service worker taking control is not an update.
+      const hadController = !!navigator.serviceWorker.controller;
       let reloading = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloading) return;
+        if (reloading || !hadController) return;
         reloading = true;
         location.reload();
       });

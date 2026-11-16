@@ -39,6 +39,7 @@ export const DEFAULT_SETTINGS = {
   level: 'beginner-intermediate',
   goals: 'Build real apps and websites, and understand the computer science behind them.',
   answerLength: 'short', // 'short' | 'detailed'
+  customInstructions: '', // the learner's own rules for the tutor
   temperature: 0.6,
   fontSize: 16,
 };
