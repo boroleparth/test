@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.env.*
+*.local
+.DS_Store
+# Never commit backups — they can contain your API keys and chats.
+cs-tutor-backup-*.json

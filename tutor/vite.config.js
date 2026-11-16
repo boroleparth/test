@@ -1,0 +1,70 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+
+// Content-Security-Policy for the production build.
+// - scripts only from our own origin (no inline scripts, no eval)
+// - network calls only to https endpoints (the AI providers)
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "connect-src 'self' https:",
+  "font-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+/**
+ * Generates dist/sw.js from src/sw-template.js, filling in the list of
+ * built files to precache and a version string derived from them.
+ * A new deploy => new file hashes => new version => phones pick up the update.
+ */
+function serviceWorkerPlugin() {
+  return {
+    name: 'tutor-service-worker',
+    apply: 'build',
+    transformIndexHtml(html) {
+      return html.replace(
+        '<meta charset="UTF-8" />',
+        `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`
+      );
+    },
+    generateBundle(_options, bundle) {
+      const files = Object.keys(bundle).filter(
+        (f) => !f.endsWith('.map') && f !== 'sw.js'
+      );
+      const staticFiles = [
+        'manifest.webmanifest',
+        'icons/icon-192.png',
+        'icons/icon-512.png',
+        'icons/maskable-512.png',
+        'icons/apple-touch-icon.png',
+        'icons/icon.svg',
+      ];
+      const precache = ['./', ...[...files, ...staticFiles].map((f) => './' + f)];
+      const version = createHash('sha256')
+        .update(precache.join('|') + Object.values(bundle).map((c) => c.code || '').join(''))
+        .digest('hex')
+        .slice(0, 12);
+      const template = readFileSync(new URL('./src/sw-template.js', import.meta.url), 'utf8');
+      const source = template
+        .replace('__VERSION__', version)
+        .replace('__PRECACHE__', JSON.stringify(precache, null, 2));
+      this.emitFile({ type: 'asset', fileName: 'sw.js', source });
+    },
+  };
+}
+
+export default defineConfig({
+  base: './',
+  plugins: [react(), serviceWorkerPlugin()],
+  build: {
+    target: 'es2020',
+    sourcemap: false,
+  },
+});

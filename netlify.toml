@@ -1,0 +1,8 @@
+# Netlify: build the tutor app in /tutor and publish its dist folder.
+[build]
+  base = "tutor"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"

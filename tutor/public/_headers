@@ -1,0 +1,19 @@
+# Security + caching headers (read by both Netlify and Cloudflare Pages).
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-Frame-Options: DENY
+
+# The service worker and HTML must always be re-checked so updates arrive.
+/sw.js
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache
+
+# Hashed build files never change, so they can be cached forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
