@@ -19,7 +19,9 @@ export default function ChatView({ conversation, mode, setMode, onSend, onStop, 
   };
   useLayoutEffect(() => {
     const el = listRef.current;
-    if (el && stickToBottom.current) el.scrollTop = el.scrollHeight;
+    if (!el) return;
+    if (messages.length === 0) el.scrollTop = 0;
+    else if (stickToBottom.current) el.scrollTop = el.scrollHeight;
   }, [messages.length, last?.content, last?.error, last?.notice]);
   useEffect(() => {
     stickToBottom.current = true;

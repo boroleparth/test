@@ -381,6 +381,12 @@ input[type='range'] {
   padding: 12px 0 4px;
   margin-top: 8px;
 }
+.provider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
 .provider.off {
   opacity: 0.75;
 }
@@ -532,6 +538,9 @@ input[type='range'] {
   overflow-x: auto;
   scrollbar-width: none;
   border-bottom: 1px solid var(--border);
+  /* fade at the right edge hints that the chips scroll sideways */
+  mask-image: linear-gradient(to right, #000 85%, transparent);
+  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
 }
 .modes::-webkit-scrollbar {
   display: none;

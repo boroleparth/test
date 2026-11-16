@@ -16,8 +16,8 @@ const CSP = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",
-  "frame-ancestors 'none'",
 ].join('; ');
+// (frame-ancestors only works as an HTTP header, so it lives in public/_headers.)
 
 /**
  * Generates dist/sw.js from src/sw-template.js, filling in the list of

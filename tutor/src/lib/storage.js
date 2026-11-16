@@ -90,14 +90,19 @@ export function exportAll({ includeKeys }) {
   };
 }
 
-/** Validates a backup object and writes it to storage. Throws a readable error if invalid. */
-export function importAll(data) {
+/** Throws a readable error if the object is not a valid backup. */
+export function validateBackup(data) {
   if (!data || typeof data !== 'object' || data.app !== 'cs-tutor') {
     throw new Error('This file is not a CS Tutor backup.');
   }
   if (!Array.isArray(data.conversations) || !Array.isArray(data.notes) || typeof data.log !== 'object') {
     throw new Error('The backup file is missing data or is damaged.');
   }
+}
+
+/** Validates a backup object and writes it to storage. */
+export function importAll(data) {
+  validateBackup(data);
   const current = loadSettings();
   const incoming = data.settings && typeof data.settings === 'object' ? data.settings : {};
   // Keep keys already on this device if the backup was exported without them.

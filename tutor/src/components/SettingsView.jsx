@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { listModels, streamChat, usableProviders } from '../lib/providers.js';
-import { exportAll, importAll, clearAll } from '../lib/storage.js';
+import { exportAll, importAll, clearAll, validateBackup } from '../lib/storage.js';
 import { DownIcon, EyeIcon, UpIcon } from './Icons.jsx';
 
 const KEY_STEPS = {
@@ -65,8 +65,8 @@ function ProviderCard({ p, index, count, onChange, onMove, temperature }) {
 
   return (
     <div className={'provider' + (p.enabled ? '' : ' off')}>
-      <div className="row between">
-        <div>
+      <div className="provider-head">
+        <div className="grow">
           <strong>
             {index + 1}. {p.name}
           </strong>
@@ -224,6 +224,7 @@ export default function SettingsView({ settings, setSettings, onDataReplaced, in
     try {
       if (file.size > 20_000_000) throw new Error('File is too large.');
       const data = JSON.parse(await file.text());
+      validateBackup(data);
       if (!confirm('Replace all data on this device with this backup?')) return;
       importAll(data);
       onDataReplaced();
