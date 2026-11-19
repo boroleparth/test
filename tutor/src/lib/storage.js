@@ -2,12 +2,14 @@
 // Nothing is sent anywhere except the chat messages you send to your AI provider.
 
 import { DEFAULT_PROVIDERS } from './providers.js';
+import { STARTER } from './playground.js';
 
 const KEYS = {
   settings: 'tutor.settings.v1',
   conversations: 'tutor.conversations.v1',
   log: 'tutor.log.v1',
   notes: 'tutor.notes.v1',
+  playground: 'tutor.playground.v1',
 };
 
 function read(key, fallback) {
@@ -74,6 +76,16 @@ export const saveLog = (log) => write(KEYS.log, log);
 export const loadNotes = () => read(KEYS.notes, []);
 export const saveNotes = (notes) => write(KEYS.notes, notes);
 
+// ---------- Code playground ----------
+// { html, css, js }
+export function loadPlayground() {
+  const p = read(KEYS.playground, null);
+  if (!p || typeof p !== 'object') return { ...STARTER };
+  const str = (v) => (typeof v === 'string' ? v : '');
+  return { html: str(p.html), css: str(p.css), js: str(p.js) };
+}
+export const savePlayground = (p) => write(KEYS.playground, { html: p.html, css: p.css, js: p.js });
+
 // ---------- Backup ----------
 export function exportAll({ includeKeys }) {
   const settings = loadSettings();
@@ -88,6 +100,7 @@ export function exportAll({ includeKeys }) {
     conversations: loadConversations(),
     log: loadLog(),
     notes: loadNotes(),
+    playground: loadPlayground(),
   };
 }
 
@@ -117,6 +130,8 @@ export function importAll(data) {
   saveConversations(data.conversations);
   saveLog({ ...DEFAULT_LOG, ...data.log });
   saveNotes(data.notes);
+  // Older backups have no playground; keep the current one then.
+  if (data.playground && typeof data.playground === 'object') savePlayground(data.playground);
 }
 
 export function clearAll() {

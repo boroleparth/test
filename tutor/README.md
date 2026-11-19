@@ -4,6 +4,8 @@ A personal AI tutor for computer science and building apps and websites. It is a
 
 - **Chat** with streaming answers, Markdown and highlighted code blocks you can copy.
 - **4 modes:** 💡 Explain · ❓ Quiz me · 🛠️ Build a project · 🐞 Debug my code.
+- **Code playground:** write HTML, CSS and JavaScript on your phone and run it, with a console. Every HTML/CSS/JS example in the chat has a **Run ▶** button, and **Ask tutor** sends your code and errors to the tutor for review.
+- **Tutor style:** your own rules for how the tutor teaches (e.g. "hints before answers").
 - **Progress:** topics you covered, quiz scores (weak topics show in red; tap one to practise it), and a **Recap & continue** button.
 - **Notes:** paste a syllabus or topic list and the tutor follows it.
 - **Backup:** export and import everything as a JSON file.
@@ -104,6 +106,17 @@ The app then opens full-screen from your home screen. Your data lives in that in
 - Ask for more depth ("explain in more detail") or set **Answer length → Detailed** in Settings.
 - On a phone, Enter adds a new line. Tap the ➤ button to send.
 
+### Code playground
+
+- **Code** tab → write in the **HTML**, **CSS** and **JS** tabs → **▶ Run** → see the page and the **Console** in **Result**.
+- The symbol row above the buttons inserts `{ } ( ) [ ] < > ;` and other characters that are awkward to reach on a phone keyboard. **⇥** inserts an indent. Pressing Enter keeps your indentation.
+- Errors show in red with the line number in your JS, e.g. `ReferenceError: x is not defined (JS line 3)`.
+- **Run ▶** on a chat code block loads it into the playground and runs it. **Undo** brings back what you had before.
+- **Ask tutor** sends your code and console output to the tutor (in the open lesson, or a new Debug lesson).
+- You can paste a complete page (starting with `<!DOCTYPE html>`) into the HTML tab, and load libraries from a CDN with `<script src="https://…">`.
+- `alert()` and `prompt()` work. Your code is saved on the device and included in backups.
+- If code with an endless loop freezes the app, close and reopen it. Code only runs when you tap Run.
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -123,11 +136,14 @@ tutor/
   public/
     manifest.webmanifest  PWA name, colours, icons
     _headers              Security headers for Netlify/Cloudflare
+    runner.html, runner.js  Sandboxed page that runs playground code
     icons/                App icons (npm run icons regenerates PNGs from icon.svg)
   src/
     main.jsx              Starts React, registers the service worker
     App.jsx               Screens, chat flow, learning log
     sw-template.js        Service worker (offline app shell)
+    lib/playground.js     Builds the page the playground runs
+    components/PlaygroundView.jsx  Code playground screen
     lib/providers.js      AI providers, streaming, fallback
     lib/prompts.js        Tutor system prompt and modes
     lib/markdown.js       Safe Markdown → HTML (escaped + DOMPurify)
@@ -139,5 +155,6 @@ tutor/
 
 - No API keys in the code or the repo. Keys live only in your browser's storage.
 - AI output is treated as untrusted. Raw HTML in answers is escaped and shown as text, code is escaped by highlight.js, and the result is sanitised with DOMPurify. Only `http(s)` and `mailto` links are allowed.
-- No `eval`, no inline scripts. A strict Content-Security-Policy blocks injected scripts.
+- No `eval`, no inline scripts in the app. A strict Content-Security-Policy blocks injected scripts.
+- The code playground runs your code in a sandboxed iframe (`sandbox="allow-scripts"`, without `allow-same-origin`) on a separate page, `runner.html`. The browser treats it as an anonymous website, so playground code **cannot read the app's storage, your API keys or your chats**. Only `runner.html` allows inline scripts (it has to, to run your code).
 - The service worker caches only this app's own files. API requests are never cached.

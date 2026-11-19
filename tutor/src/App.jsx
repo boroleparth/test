@@ -3,24 +3,29 @@ import ChatView from './components/ChatView.jsx';
 import ProgressView from './components/ProgressView.jsx';
 import NotesView from './components/NotesView.jsx';
 import SettingsView from './components/SettingsView.jsx';
-import { ChatIcon, NotesIcon, PlusIcon, ProgressIcon, SettingsIcon } from './components/Icons.jsx';
+import PlaygroundView from './components/PlaygroundView.jsx';
+import { ChatIcon, CodeIcon, NotesIcon, PlusIcon, ProgressIcon, SettingsIcon } from './components/Icons.jsx';
 import {
   DEFAULT_LOG,
   loadConversations,
   loadLog,
   loadNotes,
+  loadPlayground,
   loadSettings,
   saveConversations,
   saveLog,
   saveNotes,
+  savePlayground,
   saveSettings,
   uid,
 } from './lib/storage.js';
 import { chatWithFallback, usableProviders } from './lib/providers.js';
 import { buildApiMessages, buildSystemPrompt, CONTINUE_PROMPT, extractTags, MODES } from './lib/prompts.js';
+import { askTutorMessage, isFullDocument, RUNNABLE } from './lib/playground.js';
 
 const TABS = [
   { id: 'chat', label: 'Chat', Icon: ChatIcon },
+  { id: 'code', label: 'Code', Icon: CodeIcon },
   { id: 'progress', label: 'Progress', Icon: ProgressIcon },
   { id: 'notes', label: 'Notes', Icon: NotesIcon },
   { id: 'settings', label: 'Settings', Icon: SettingsIcon },
@@ -67,6 +72,9 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [swWorker, setSwWorker] = useState(null);
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [playground, setPlayground] = useState(loadPlayground);
+  const [pgAutoRun, setPgAutoRun] = useState(false);
+  const [pgUndo, setPgUndo] = useState(null); // { note, previous } after loading code from chat
   const abortRef = useRef(null);
   const convRef = useRef(conversations);
   convRef.current = conversations;
@@ -78,6 +86,10 @@ export default function App() {
   useEffect(() => void saveSettings(settings), [settings]);
   useEffect(() => void saveLog(log), [log]);
   useEffect(() => void saveNotes(notes), [notes]);
+  useEffect(() => {
+    const t = setTimeout(() => savePlayground(playground), 400);
+    return () => clearTimeout(t);
+  }, [playground]);
   useEffect(() => {
     const t = setTimeout(() => saveConversations(conversations), busy ? 800 : 0);
     return () => clearTimeout(t);
@@ -247,17 +259,43 @@ export default function App() {
     send(`Quiz me on ${topic}. Focus on what I might have gotten wrong before.`, { conversationId: null, forceMode: 'quiz' });
   };
 
+  // ---- Code playground ----
+  /** "Run ▶" on a chat code block: load it into the matching pane and run it. */
+  const runCodeFromChat = useCallback(
+    (lang, code) => {
+      const pane = RUNNABLE[lang];
+      if (!pane) return;
+      const previous = playground;
+      // A complete HTML page replaces everything; otherwise only the matching pane changes.
+      const next = pane === 'html' && isFullDocument(code) ? { html: code, css: '', js: '' } : { ...playground, [pane]: code };
+      setPlayground(next);
+      setPgUndo({ note: `Loaded ${pane.toUpperCase()} from chat.`, previous });
+      setPgAutoRun(true);
+      setTab('code');
+    },
+    [playground]
+  );
+  const onAutoRunDone = useCallback(() => setPgAutoRun(false), []);
+
+  const askTutorAboutCode = (logs) => {
+    const text = askTutorMessage(playground, logs);
+    // Goes to the open lesson; with no lesson open, starts one in Debug mode.
+    send(text, active ? {} : { conversationId: null, forceMode: 'debug' });
+  };
+
   const reloadAll = () => {
     setSettings(loadSettings());
     setConversations(loadConversations());
     setLog(loadLog());
     setNotes(loadNotes());
+    setPlayground(loadPlayground());
+    setPgUndo(null);
     setActiveId(null);
   };
 
   const hasProvider = usableProviders(settings.providers).length > 0;
   const headerTitle =
-    tab === 'chat' ? active?.title || 'New lesson' : TABS.find((t) => t.id === tab).label;
+    tab === 'chat' ? active?.title || 'New lesson' : tab === 'code' ? 'Code playground' : TABS.find((t) => t.id === tab).label;
 
   return (
     <div className="app">
@@ -294,6 +332,24 @@ export default function App() {
             onRetry={retry}
             hasProvider={hasProvider}
             goSettings={() => setTab('settings')}
+            onRunCode={runCodeFromChat}
+          />
+        )}
+        {tab === 'code' && (
+          <PlaygroundView
+            code={playground}
+            setCode={(c) => {
+              setPlayground(c);
+              setPgUndo(null);
+            }}
+            autoRun={pgAutoRun}
+            onAutoRunDone={onAutoRunDone}
+            loadedNote={pgUndo?.note}
+            onUndoLoad={() => {
+              setPlayground(pgUndo.previous);
+              setPgUndo(null);
+            }}
+            onAskTutor={askTutorAboutCode}
           />
         )}
         {tab === 'progress' && (

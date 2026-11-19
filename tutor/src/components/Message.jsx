@@ -37,16 +37,20 @@ function flash(button, label) {
   }, 1500);
 }
 
-// One click handler for all "Copy" buttons inside rendered markdown (no inline handlers).
-async function onMarkdownClick(e) {
-  const btn = e.target.closest('.copy-btn');
+// One click handler for all "Copy" / "Run" buttons inside rendered markdown (no inline handlers).
+async function onMarkdownClick(e, onRunCode) {
+  const btn = e.target.closest('.copy-btn, .run-btn');
   if (!btn) return;
   const code = btn.closest('.codeblock')?.querySelector('code');
   if (!code) return;
+  if (btn.classList.contains('run-btn')) {
+    onRunCode?.(btn.dataset.lang, code.textContent);
+    return;
+  }
   flash(btn, (await copyText(code.textContent)) ? 'Copied!' : 'Failed');
 }
 
-function Message({ message, onRetry, isLast }) {
+function Message({ message, onRetry, isLast, onRunCode }) {
   const { role, content, streaming, error, notice, provider } = message;
   const visible = role === 'assistant' ? stripTags(content) : content;
   const html = useMemo(() => (role === 'assistant' ? renderMarkdown(visible) : ''), [role, visible]);
@@ -63,7 +67,7 @@ function Message({ message, onRetry, isLast }) {
     <div className="msg msg-assistant">
       {notice && <div className="notice" role="status">{notice}</div>}
       {visible ? (
-        <div className="markdown" onClick={onMarkdownClick} dangerouslySetInnerHTML={{ __html: html }} />
+        <div className="markdown" onClick={(e) => onMarkdownClick(e, onRunCode)} dangerouslySetInnerHTML={{ __html: html }} />
       ) : (
         streaming && (
           <div className="typing" aria-label="Tutor is typing">

@@ -1,19 +1,49 @@
 # Security + caching headers (read by both Netlify and Cloudflare Pages).
-/*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+# Netlify and Cloudflare COMBINE every rule that matches a path, so the app and the
+# playground runner get separate rules instead of one "/*" catch-all.
+
+# ---- The app ----
+/
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  X-Frame-Options: DENY
-
-# The service worker and HTML must always be re-checked so updates arrive.
-/sw.js
   Cache-Control: no-cache
 /index.html
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
   Cache-Control: no-cache
-/
+
+# The service worker must always be re-checked so updates arrive.
+/sw.js
   Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
 
 # Hashed build files never change, so they can be cached forever.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+# ---- Code playground runner ----
+# Runs the learner's own code, so inline scripts are allowed HERE ONLY. It is always loaded
+# in a sandboxed iframe (no allow-same-origin), so it cannot read the app's storage or keys.
+# Cloudflare serves /runner.html as /runner, so both paths are listed.
+# Browsers don't let the service worker serve sandboxed frames, so the runner relies on the
+# normal HTTP cache for offline use: fresh for 1 day, usable (offline too) for up to 30 days.
+/runner.html
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'unsafe-inline' https:; img-src data: blob: https:; font-src data: https:; media-src data: blob: https:; connect-src https:; frame-ancestors 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+/runner
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'unsafe-inline' https:; img-src data: blob: https:; font-src data: https:; media-src data: blob: https:; connect-src https:; frame-ancestors 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+/runner.js
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+  X-Content-Type-Options: nosniff

@@ -45,6 +45,10 @@ function serviceWorkerPlugin() {
         'icons/maskable-512.png',
         'icons/apple-touch-icon.png',
         'icons/icon.svg',
+        // The sandboxed playground can't be served by the service worker, but fetching these
+        // here also fills the browser's HTTP cache, so the playground works offline.
+        'runner.html',
+        'runner.js',
       ];
       const precache = ['./', ...[...files, ...staticFiles].map((f) => './' + f)];
       const version = createHash('sha256')

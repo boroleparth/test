@@ -88,3 +88,8 @@ export const CopyIcon = (p) => (
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </Icon>
 );
+export const CodeIcon = (p) => (
+  <Icon {...p}>
+    <path d="m8 6-6 6 6 6M16 6l6 6-6 6" />
+  </Icon>
+);

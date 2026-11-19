@@ -27,6 +27,7 @@ import yaml from 'highlight.js/lib/languages/yaml';
 import markdown from 'highlight.js/lib/languages/markdown';
 import diff from 'highlight.js/lib/languages/diff';
 import plaintext from 'highlight.js/lib/languages/plaintext';
+import { RUNNABLE } from './playground.js';
 
 Object.entries({
   javascript, typescript, xml, css, scss, python, json, bash, shell, sql, java, c, cpp, csharp, go, rust, php, yaml, markdown, diff, plaintext,
@@ -56,7 +57,11 @@ marked.use({
         highlighted = escapeHtml(text);
       }
       const label = escapeHtml(language || 'code');
-      return `<div class="codeblock"><div class="codeblock-bar"><span class="codeblock-lang">${label}</span><button type="button" class="copy-btn" aria-label="Copy code">Copy</button></div><pre><code class="hljs">${highlighted}</code></pre></div>`;
+      // HTML/CSS/JS examples get a "Run" button that opens them in the playground.
+      const runBtn = RUNNABLE[language]
+        ? `<button type="button" class="run-btn" data-lang="${escapeHtml(language)}" aria-label="Run in playground">Run ▶</button>`
+        : '';
+      return `<div class="codeblock"><div class="codeblock-bar"><span class="codeblock-lang">${label}</span><span class="codeblock-actions">${runBtn}<button type="button" class="copy-btn" aria-label="Copy code">Copy</button></span></div><pre><code class="hljs">${highlighted}</code></pre></div>`;
     },
   },
 });

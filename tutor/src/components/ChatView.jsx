@@ -3,7 +3,7 @@ import Message from './Message.jsx';
 import { MODES, MODE_KEYS } from '../lib/prompts.js';
 import { SendIcon, StopIcon } from './Icons.jsx';
 
-export default function ChatView({ conversation, mode, setMode, onSend, onStop, busy, onRetry, hasProvider, goSettings }) {
+export default function ChatView({ conversation, mode, setMode, onSend, onStop, busy, onRetry, hasProvider, goSettings, onRunCode }) {
   const [text, setText] = useState('');
   const listRef = useRef(null);
   const inputRef = useRef(null);
@@ -97,7 +97,13 @@ export default function ChatView({ conversation, mode, setMode, onSend, onStop, 
           </div>
         ) : (
           messages.map((msg, i) => (
-            <Message key={msg.id} message={msg} isLast={i === messages.length - 1} onRetry={busy ? null : onRetry} />
+            <Message
+              key={msg.id}
+              message={msg}
+              isLast={i === messages.length - 1}
+              onRetry={busy ? null : onRetry}
+              onRunCode={onRunCode}
+            />
           ))
         )}
       </div>

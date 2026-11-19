@@ -37,8 +37,10 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // never cache API traffic
 
-  // Page navigations: serve the cached app shell.
-  if (req.mode === 'navigate') {
+  // Opening the app itself: serve the cached app shell.
+  // (Other pages, like the playground's runner.html, fall through to the normal cache lookup.)
+  const scopePath = new URL(self.registration.scope).pathname;
+  if (req.mode === 'navigate' && (url.pathname === scopePath || url.pathname === scopePath + 'index.html')) {
     event.respondWith(
       caches.match('./', { ignoreSearch: true }).then((cached) => cached || fetch(req))
     );
